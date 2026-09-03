@@ -5,7 +5,7 @@ Paths are in the private `lighting-os` repository at the production release of 2
 | Claim | Path |
 |---|---|
 | 46 serverless routes | `api/*.js` (count of files) |
-| Browser uses Auth OTP only; all data via API with service role | `scripts/migrations/2026-07-16-public-schema-lockdown.sql` header; `lib/api-shared.js` |
+| Browser has no direct data path; Google Sign-In + magic links + sessions in Postgres; all data via API with service role | `api/auth.js` header, `scripts/migrations/2026-07-16-public-schema-lockdown.sql` header, `lib/api-shared.js` |
 | RLS enabled and forced, browser roles revoked | `scripts/migrations/2026-06-19-rls-lockdown.sql`, `scripts/migrations/2026-07-16-public-schema-lockdown.sql` |
 | Event trigger locks down future public objects | `scripts/migrations/2026-07-16-public-schema-lockdown.sql` (lines ~119-140, ~456-470) |
 | Durable rate limit RPC, fail closed on Vercel | `scripts/migrations/2026-07-16-durable-rate-limit-ledger.sql`, `lib/rate-limit.js`, `lib/usage.js` |

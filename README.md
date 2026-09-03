@@ -19,7 +19,6 @@ flowchart LR
   end
   subgraph Supabase
     PG[(Postgres<br/>RLS forced, service role only)]
-    AUTH[Auth OTP]
   end
   subgraph Providers
     STRIPE[Stripe<br/>invoices, subscriptions, webhooks]
@@ -27,6 +26,7 @@ flowchart LR
     MAIL[Resend]
     SMS[Twilio]
     MAPS[Google Maps]
+    GSI[Google Sign-In<br/>ID token verification]
   end
   subgraph Ops
     SENTRY[Sentry]
@@ -36,7 +36,6 @@ flowchart LR
   end
   B --> API
   P --> API
-  B --> AUTH
   API --> PG
   API --> BLOB
   API --> STRIPE
@@ -45,6 +44,7 @@ flowchart LR
   API --> MAIL
   API --> SMS
   API --> MAPS
+  API --> GSI
   CRON --> API
   API --> SENTRY
   API --> TG
@@ -52,7 +52,7 @@ flowchart LR
   GH -. deploys on merge .-> Vercel
 ```
 
-The browser never reads application data from Supabase directly. It uses Supabase Auth for the OTP sign-in and then talks only to the API, which authenticates every database call with the service role. That single choice is what makes "RLS on, no browser policies, deny by default" safe to enforce.
+The browser never reads application data from Supabase directly. Sign-in is Google Sign-In with the ID token verified server-side, plus LightDeck-minted magic links and sessions stored in Postgres. Every database call goes through the API with the service role. That single choice is what makes "RLS on, no browser policies, deny by default" safe to enforce.
 
 ## Money path
 
@@ -104,7 +104,7 @@ A model may propose bounded copy, classifications, placement suggestions, or ima
 - Every application table carries `account_id`. Opaque ids are `text` matching a strict charset regex enforced by `CHECK`, never filenames, never uuids the browser can guess.
 - Composite tenant keys lead every primary key and index in the rendering spine after two accounts sharing a project id and source id produced a byte-identical cache key. That cross-tenant hit is the reason the tuple is never narrowed.
 - A `LIGHTDECK_SINGLE_TENANT` flag exists so the founder account can run the product as a single-tenant install while the multi-tenant paths stay exercised by tests.
-- Sessions, magic links, and team invites are server-minted tokens with global uniqueness enforced in the database.
+- Sessions, magic links, and team invites are server-minted tokens stored in Postgres with uniqueness enforced in the database. Owner sign-in verifies a Google ID token against Google's tokeninfo endpoint with a hard deadline so a hung socket cannot stall the sign-in path.
 
 ## Limits and circuits
 
