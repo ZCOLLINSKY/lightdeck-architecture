@@ -1,5 +1,7 @@
 # Production incident rollback
 
+Paths in backticks that are not linked live in the private repository.
+
 **For:** Zach, alone, at 7pm, when a deploy landed and the app throws on the main path.
 **Goal:** get production back to a build that worked, then put git back in agreement with it.
 
@@ -18,7 +20,7 @@ the app throws on load, a proposal link 500s, sign-in fails, money math is wrong
 
 **Do NOT roll back when a database migration has already been applied for this release.**
 Reverting the code under an applied migration is not covered by this runbook and can
-destroy data. That case escalates to `docs/supabase-backup-restore.md` and stops here.
+destroy data. That case escalates to `https://github.com/ZCOLLINSKY/supabase-production-patterns/blob/main/docs/backup-and-restore.md` and stops here.
 
 Check before you touch anything:
 
@@ -28,7 +30,7 @@ ls scripts/migrations/ | tail -20
 ```
 
 If the release you are undoing added or applied a migration, STOP and go to
-`docs/supabase-backup-restore.md`.
+`https://github.com/ZCOLLINSKY/supabase-production-patterns/blob/main/docs/backup-and-restore.md`.
 
 ---
 
@@ -59,14 +61,14 @@ wrong deployment; re-read the list before doing anything else.
 
 ---
 
-## STEP 2: EMERGENCY EXCEPTION: Vercel Instant Rollback
+## STEP 2: emergency exception, Vercel Instant Rollback
 
 **This is sanctioned.** Vercel dashboard → the `lighting-os` project → Deployments →
 find the deployment whose commit is `GOOD_SHA` → the `...` menu → **Instant Rollback**
 (older projects label the same control **Promote to Production**).
 
 Why this is allowed when `docs/OWNER_GO_LIVE.md` forbids a "dashboard redeploy": that
-rule exists to stop *unproven code* reaching production without the gate: and to stop
+rule exists to stop *unproven code* reaching production without the gate, and to stop
 the split-brain that the retired `deploy.sh` caused by pushing an uncommitted local copy
 with `vercel --prod`. Instant Rollback does neither. It re-points the production alias at
 an immutable build Vercel already produced from a merged, gate-passed commit. No new
@@ -148,6 +150,6 @@ The last field is the only one that prevents a repeat.
 | Situation | Action |
 |---|---|
 | Broken deploy, no migration applied | STEP 2 Instant Rollback, then STEP 4 revert PR the same night |
-| Broken deploy, migration applied | STOP: `docs/supabase-backup-restore.md` |
+| Broken deploy, migration applied | STOP: `https://github.com/ZCOLLINSKY/supabase-production-patterns/blob/main/docs/backup-and-restore.md` |
 | Not sure whether a migration applied | Treat it as applied. STOP. |
 | Rollback done, revert PR not yet merged | The incident is OPEN. Do not merge anything else to `integrate/prod-truth`. |

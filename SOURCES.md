@@ -22,7 +22,7 @@ Paths are in the private `lighting-os` repository at the production release of 2
 | Single-tenant escape hatch | `LIGHTDECK_SINGLE_TENANT` in `lib/invoice-paid-effects.js` (`ownerAccountAllowed`) |
 | AI spend caps and verifier circuit | `LIGHTDECK_ACCT_DAILY_UNITS` in `api/analyze-photo.js`, `api/lightdeck-ai.js`, `api/render.js`; `LIGHTDECK_AI_ORG_MONTHLY_USD` in `api/lightdeck-ai.js`; `LIGHTDECK_RENDER_VERIFIER_CIRCUIT_MS` in `api/render.js` |
 | Outbound gate | `scripts/migrations/2026-09-02-outbound-gate.sql`, `lib/outbound-gate.js` |
-| Render budgets with retry reserve | `LD_RENDER_BUDGET_MS`, `LD_RENDER_RETRY_RESERVE_MS` in `lib/render-engine.js` |
+| Render budgets with retry reserve | `LD_RENDER_BUDGET_MS` in `api/render.js`; `LD_RENDER_RETRY_RESERVE_MS` in `lib/render-engine.js` |
 | AI ownership boundary, JobTruthPacket | `docs/LIGHTDECK_AI_RUNTIME_ARCHITECTURE.md` |
 | Test lane counts | `find tests -name '*.spec.ts'` = 470; per-lane counts from the same command scoped to each directory |
 | Gate jobs and self-hosted runners | `.github/workflows/gate.yml` (`runs-on: [self-hosted, lightdeck-ci]`, foundation + 4 browser shards) |
