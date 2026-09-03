@@ -11,7 +11,7 @@ built from a merged commit is a different action, and it is sanctioned here.
 
 ---
 
-## STEP 0 — Decide whether this is a rollback at all
+## STEP 0: Decide whether this is a rollback at all
 
 Roll back when the current production build is broken for contractors or homeowners:
 the app throws on load, a proposal link 500s, sign-in fails, money math is wrong.
@@ -32,7 +32,7 @@ If the release you are undoing added or applied a migration, STOP and go to
 
 ---
 
-## STEP 1 — Find the previous-good SHA
+## STEP 1: Find the previous-good SHA
 
 The production deployment history is the source of truth for what was live before.
 This is the same call `scripts/os-health.mjs` already makes for its "repo == prod" check.
@@ -59,14 +59,14 @@ wrong deployment; re-read the list before doing anything else.
 
 ---
 
-## STEP 2 — EMERGENCY EXCEPTION: Vercel Instant Rollback
+## STEP 2: EMERGENCY EXCEPTION: Vercel Instant Rollback
 
 **This is sanctioned.** Vercel dashboard → the `lighting-os` project → Deployments →
 find the deployment whose commit is `GOOD_SHA` → the `...` menu → **Instant Rollback**
 (older projects label the same control **Promote to Production**).
 
 Why this is allowed when `docs/OWNER_GO_LIVE.md` forbids a "dashboard redeploy": that
-rule exists to stop *unproven code* reaching production without the gate — and to stop
+rule exists to stop *unproven code* reaching production without the gate: and to stop
 the split-brain that the retired `deploy.sh` caused by pushing an uncommitted local copy
 with `vercel --prod`. Instant Rollback does neither. It re-points the production alias at
 an immutable build Vercel already produced from a merged, gate-passed commit. No new
@@ -81,7 +81,7 @@ cannot complete in ten minutes, which is why STEP 2 exists.
 
 ---
 
-## STEP 3 — Verify the rollback landed (the verification triple)
+## STEP 3: Verify the rollback landed (the verification triple)
 
 All three, in order. Two out of three is not a verified rollback.
 
@@ -111,7 +111,7 @@ All three, in order. Two out of three is not a verified rollback.
 
 ---
 
-## STEP 4 — MANDATORY: open the revert PR the same night
+## STEP 4: MANDATORY: open the revert PR the same night
 
 The dashboard rollback moved production. It did **not** move git. Until this step is
 done, `integrate/prod-truth` still carries the broken commit, and the very next merge
@@ -135,7 +135,7 @@ Git and production reconverge when that merge deploys. Only then is the incident
 
 ---
 
-## STEP 5 — Write down what happened
+## STEP 5: Write down what happened
 
 Append one paragraph to `docs/OWNER_BLOCKERS.md`: what broke, `BAD_SHA`, `GOOD_SHA`,
 when the rollback landed, when the revert PR merged, and what test would have caught it.
@@ -148,6 +148,6 @@ The last field is the only one that prevents a repeat.
 | Situation | Action |
 |---|---|
 | Broken deploy, no migration applied | STEP 2 Instant Rollback, then STEP 4 revert PR the same night |
-| Broken deploy, migration applied | STOP — `docs/supabase-backup-restore.md` |
+| Broken deploy, migration applied | STOP: `docs/supabase-backup-restore.md` |
 | Not sure whether a migration applied | Treat it as applied. STOP. |
 | Rollback done, revert PR not yet merged | The incident is OPEN. Do not merge anything else to `integrate/prod-truth`. |
