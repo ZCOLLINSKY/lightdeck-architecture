@@ -4,6 +4,8 @@ How a solo founder-operator's vertical SaaS is built, run, and kept honest. [Lig
 
 The private repository is 2,785 commits over 98 days. This repo is the public architecture record: the system, the request flows, the tenancy and safety model, the test strategy, and the decisions with their reasons. The SQL behind the database patterns is in [supabase-production-patterns](https://github.com/ZCOLLINSKY/supabase-production-patterns).
 
+Published 2026-09-03, extracted from the private repository so the work is inspectable ahead of Supabase Select. The commit dates here are the extraction date, not when the code was written; the SQL headers carry their own authoring dates.
+
 ## System
 
 ```mermaid
