@@ -430,7 +430,7 @@ Do not claim this architecture is live until all are true:
 - no API key is stored with browser-reversible obfuscation;
 - credits and entitlements are server-authoritative;
 - proposal, invoice, PDF, share page, and render all bind to frozen truth/artifact hashes;
-- the real Lexington a venue client;
+- a real customer proof uses the authorized private project sources and is not confused with a synthetic house fixture;
 - payment changes, migrations, merge, push, and production deployment receive their distinct approvals and evidence;
 - deployed SHA, database migrations, API health, and browser journeys are directly verified.
 
