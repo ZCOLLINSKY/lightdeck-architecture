@@ -19,16 +19,16 @@ Paths are in the private `lighting-os` repository at the production release of 2
 | Onboarding state machine | `supabase/migrations/20260830193045_lightdeck_onboarding_state_machine.sql`, `lib/onboarding-state.js` |
 | Immutable source job id, legacy quarantine | `scripts/migrations/2026-08-21-proposal-client-as-built-atomic.sql`, `lib/as-built.js` |
 | Tenant tuple in rendering spine; cross-tenant cache hit | `scripts/migrations/2026-07-30-render-source-spine.sql` header; `lib/render-source-spine.js`, `lib/render-source-manifest.js` |
-| Single-tenant flag | `LIGHTDECK_SINGLE_TENANT` in `api/` and `lib/tenant-identity.js` |
+| Single-tenant escape hatch | `LIGHTDECK_SINGLE_TENANT` in `lib/invoice-paid-effects.js` (`ownerAccountAllowed`) |
 | AI spend caps and verifier circuit | `LIGHTDECK_ACCT_DAILY_UNITS`, `LIGHTDECK_AI_ORG_MONTHLY_USD`, `LIGHTDECK_RENDER_VERIFIER_CIRCUIT_MS` and related env in `api/render.js`, `api/verify-render.js`, `lib/render-finisher-budget.js` |
 | Outbound gate | `scripts/migrations/2026-09-02-outbound-gate.sql`, `lib/outbound-gate.js` |
 | Render budgets with retry reserve | `LD_RENDER_BUDGET_MS`, `LD_RENDER_RETRY_RESERVE_MS` in `api/render.js` |
 | AI ownership boundary, JobTruthPacket | `docs/LIGHTDECK_AI_RUNTIME_ARCHITECTURE.md` |
-| Test lane counts | `tests/regressions`, `tests/e2e`, `tests/visual`, `tests/mobile`, `tests/a11y`, `tests/adversarial` |
+| Test lane counts | `find tests -name '*.spec.ts'` = 470; per-lane counts from the same command scoped to each directory |
 | Gate jobs and self-hosted runners | `.github/workflows/gate.yml` (`runs-on: [self-hosted, lightdeck-ci]`, foundation + 4 browser shards) |
 | Compact receipts after storage exhaustion | `.github/workflows/gate.yml` ("Build compact foundation evidence") |
 | Daily logical backup, heartbeat | `api/backup-supabase.js`, `lib/supabase-logical-backup.js`, `docs/supabase-backup-restore.md` |
 | Incident rollback runbook | `docs/incident-rollback.md` |
 | Production migration go/no-go | `docs/supabase-production-migration-2026-07-16.md`, `scripts/verify-production-migrations.mjs` |
-| Hardening audit waves | PRs #227 and #228 on the private repo |
+| Hardening audit waves | PRs #226, #227, #228 on the private repo, all merged 2026-09-02 |
 | Commit and day counts | `git rev-list --count HEAD` = 2785; first commit 2026-05-27, release 2026-09-02 |

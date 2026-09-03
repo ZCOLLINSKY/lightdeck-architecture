@@ -101,47 +101,47 @@ A model may propose bounded copy, classifications, placement suggestions, or ima
 
 ## Tenancy
 
-- Every application table carries `account_id`. Opaque ids are `text` matching a strict charset regex enforced by `CHECK`, never filenames, never uuids the browser can guess.
-- Composite tenant keys lead every primary key and index in the rendering spine after two accounts sharing a project id and source id produced a byte-identical cache key. That cross-tenant hit is the reason the tuple is never narrowed.
-- A `LIGHTDECK_SINGLE_TENANT` flag exists so the founder account can run the product as a single-tenant install while the multi-tenant paths stay exercised by tests.
+- Tenant-scoped tables carry `account_id`. The render receipt tables carry a SHA-256 `account_ref` instead of the raw id, so a receipt cannot name a client. A handful of platform-level logs predate the tenancy work and carry neither. Opaque ids are `text` matching a strict charset regex enforced by `CHECK`, never filenames.
+- Composite tenant keys lead every primary key and index in the rendering spine schema, after two accounts sharing a project id and source id produced a byte-identical cache key. That cross-tenant hit is the reason the tuple is never narrowed.
+- One named escape hatch, `LIGHTDECK_SINGLE_TENANT`, lives in a single gate. Without it, an unset primary account id denies every account rather than allowing every account, and API tests pin both behaviors.
 - Sessions, magic links, and team invites are server-minted tokens stored in Postgres with uniqueness enforced in the database. Owner sign-in verifies a Google ID token against Google's tokeninfo endpoint with a hard deadline so a hung socket cannot stall the sign-in path.
 
 ## Limits and circuits
 
 - **Rate limits** live in Postgres (`charge_ai_usage`) because serverless instances share nothing. On Vercel the limiter fails closed by construction.
-- **AI spend** has per-account daily and monthly unit caps, a fleet-wide daily cap, an org-level monthly dollar ceiling, and a render verifier circuit that opens after repeated verification failures. All are environment-configured and enforced server-side.
+- **AI spend** has per-account daily and monthly unit caps, a fleet-wide daily cap, an org-level monthly dollar ceiling, and a render verifier circuit that a single unavailable verification verdict closes for the rest of the window and the next one, so a cold start cannot buy another image. All are environment-configured and enforced server-side.
 - **Outbound messages** pass one gate: per-account halt rows, daily caps, per-recipient cooldown via salted hash, dedupe replay, and actor attribution, in one table. The global halt is an env flag so it works while the database is down.
 - **Render budgets** are time-boxed with a retry reserve so a slow provider cannot eat the function's wall clock.
 
 ## Tests and gate
 
-517 Playwright test files across regression (341), end-to-end (113), visual (13), mobile (11), accessibility (3), and adversarial (2) lanes.
+470 Playwright spec files: regression 340, end-to-end 113, mobile 9, accessibility 3, adversarial 2, one desktop visual spec carrying 12 committed baselines, plus an integration spec and a seed spec. 517 files live under `tests/` once fixtures, helpers, and baseline images are counted.
 
-The production branch is protected by a gate that runs on four self-hosted Mac runners: a foundation job (source and browser-global contracts, API and money-path contracts, desktop visual baselines with zero retries, repository health) plus four browser shards. The gate uploads compact receipts, not multi-gigabyte reports, after a storage exhaustion incident.
+The production branch is protected by a gate that runs on four self-hosted Mac runners: a foundation job (source and browser-global contracts, API and money-path contracts, desktop visual baselines with zero retries, repository health) plus four browser shards. The gate uploads a compact integrity receipt on green runs and full HTML diagnostics only on failure, with short retention, after green runs started exhausting the repository's Actions artifact allowance.
 
-"Honest tests" is a standing rule: a green test that certifies unchanged behavior is not evidence of correct behavior. The adversarial lane exists to attack the app's own claims, and audit waves re-verify what agents report as fixed.
+Tests have to mean what they say: the shared fixture fails any spec that silently leaves a real API call unmocked, which is how a green run stops certifying a stub. The adversarial lane drives the app as hostile personas and at volume, and a required adversarial review check sits on the production branch alongside the gate. Audit waves re-run the gate on the integrated head and trace every failure to a root cause before merge.
 
 ## How the code gets written
 
-I run fleets of Claude Code and Codex agents. They open PRs against the production branch; the gate judges them; audit waves verify the claims in the PR bodies against the running system before merge. A hardening audit this week shipped three waves (sign-in cohort, money path, render honesty, observability, ledger, onboarding edges, runbooks) as reviewed PRs. The agents type. The gate, the receipts, and I decide.
+I run fleets of Claude Code and Codex agents. They open PRs against the production branch; the gate judges them; audit waves re-run the gate on the integrated head and trace every failure to a root cause before merge. A hardening audit this week shipped three waves as three gated PRs in two days: cohort and sign-in hardening, then the money path and render economics, then observability, the migration ledger, onboarding edges, and runbooks. The agents type. The gate, the receipts, and I decide.
 
 ## Decisions
 
-**Postgres ledger over Redis for rate limiting.** A second datastore adds an outage mode and a consistency question. One atomic RPC in the database I already run is simpler to reason about and fails closed with the same dependency as everything else.
+**Postgres ledger for rate limiting.** The limiter runs as one atomic RPC in the database the app already depends on, so it has no second outage mode and fails closed with the same dependency as everything else.
 
-**Fail closed in production, degrade in development.** The rate limiter, the render attempt store, and the outbound gate all refuse in production when their backing table is unreachable. The alternative is silently unlimited spend or duplicate customer messages during exactly the incidents that make tables unreachable.
+**Fail closed in production, degrade in development.** The rate limiter and the render attempt store refuse in production when their backing table is unreachable. The outbound gate splits deliberately: the halt flag is an env var and needs no database, so the one control that must work in an outage does, while caps and dedupe degrade and log it. The alternative is silently unlimited spend during exactly the incidents that make tables unreachable.
 
-**Service role only, RLS forced anyway.** The browser has no data path, so RLS could look redundant. It is not: it turns the architecture into a database invariant, so a leaked anon key or a future direct client sees zero rows. The event trigger extends that to objects nobody has written yet.
+**Service role only, RLS forced anyway.** The browser has no data path, so RLS could look redundant. It is not: it turns the architecture into a database invariant. On 2026-09-03 a probe with the public anon key against six PII tables returned 401, permission denied for schema public, and the catalog showed row security enabled on 37 of 37 public tables. An event trigger in the lockdown migration extends the same treatment to objects nobody has written yet, and the migration verifies itself with a probe object before it commits.
 
-**Append-only receipts instead of mutable status columns.** Provenance you can edit is not provenance. Hash-bound rows with a mutation-rejecting trigger are the audit trail for every image a homeowner sees.
+**Append-only receipts instead of mutable status columns.** Provenance you can edit is not provenance. Hash-bound rows with a mutation-rejecting trigger are the audit trail for every AI render a homeowner sees.
 
 **Outbox in the row, not a separate queue.** Writing `paid_effects_status='pending'` in the same statement as `status='paid'` removes the window where a queue enqueue could fail after the commit. The sweep is the consumer.
 
-**One outbound gate table.** Four controls that must agree (halt, cap, cooldown, dedupe) are cheaper to reason about, and to halt, when they share a ledger. This replaced a plan for four library files.
+**One outbound gate table.** Four controls that must agree (halt, cap, cooldown, dedupe) are cheaper to reason about, and to halt, when they share a ledger. Before this module existed, the only way to stop an agent emailing homeowners at 2am was pulling the Vercel deployment or the email provider key, and the second also breaks sign-in email.
 
-**Self-hosted runners.** Visual baselines and full browser shards on hosted runners were slow and cost-unbounded. Four runners on hardware I own give deterministic environments and let me run the full gate on every PR.
+**Self-hosted runners.** Four macOS runner processes on hardware I own give deterministic browser environments and let the full gate, including desktop visual baselines at zero retries, run on every PR. Shards queue when fewer runners are online.
 
-**Models never own money or identity.** The typed truth packet and the policy validator exist so switching providers can never change a total, a deposit, a warranty, or a share link. This was a rewrite decision, not a prompt tweak.
+**Models never own money or identity.** The recorded decision is a typed truth packet and a policy validator, so switching providers can never change a total, a deposit, a warranty, or a share link. The proposal writer path is built to that contract today; carrying it through every remaining UI surface is tracked work, not a finished state.
 
 ## Runbooks
 
