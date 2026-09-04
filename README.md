@@ -125,7 +125,7 @@ Tests have to mean what they say: the shared fixture fails any spec that silentl
 
 ## How the code gets written
 
-I run fleets of Claude Code and Codex agents. They open PRs against the production branch; the gate judges them; audit waves re-run the gate on the integrated head and trace every failure to a root cause before merge. A hardening audit this week shipped three waves as three gated PRs in one day: cohort and sign-in hardening, then the money path and render economics, then observability, the migration ledger, onboarding edges, and runbooks. The agents type. The gate, the receipts, and I decide.
+I set the requirements and the rules above, and I decide what merges and what goes live. Claude Code and Codex agents write most of the code and open PRs against the production branch; the gate judges them; audit waves re-run the gate on the integrated head and trace every failure to a root cause before merge. A hardening audit this week shipped three waves as three gated PRs in one day: cohort and sign-in hardening, then the money path and render economics, then observability, the migration ledger, onboarding edges, and runbooks.
 
 ## Decisions
 
